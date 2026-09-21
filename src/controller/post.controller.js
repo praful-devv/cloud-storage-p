@@ -80,29 +80,36 @@ const getPostDetailsController = async (req, res) => {
     });
   }
 
-  const decode = await jwt.verify(token, process.env.JWT_SECRETS);
-
-  if (!decode) {
+  let decode;
+  try {
+    decode = await jwt.verify(token, process.env.JWT_SECRETS);
+  } catch (error) {
     return res.status(401).json({
       message: "unauthorized access",
     });
   }
+
   const userId = decode.id;
 
   const post = await postModel.findById(postId);
 
+  if(!post){
+    return res.status(404).json({
+      message:"post not found"
+    })
+  }
 
-  const postDetails = userId === post.createdBy.toString();
+  const isValidUser = userId === post.createdBy.toString();
 
-  if (!postDetails) {
+  if (!isValidUser) {
     return res.status(403).json({
-      message: "post not found",
+      message: "Forbidden Content",
     });
   }
 
   return res.status(200).json({
     message: "get post details successfully",
-    post
+    post,
   });
 };
 
