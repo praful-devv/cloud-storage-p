@@ -7,22 +7,8 @@ const IMAGEKIT = new imagekit({
 const jwt = require("jsonwebtoken");
 
 const createpostController = async (req, res) => {
-  const token = req.cookies.jwt_token;
 
-  if (!token) {
-    return res.status(401).json({
-      message: "unauthorized access",
-    });
-  }
-
-  let decode;
-  try {
-    decode = jwt.verify(token, process.env.JWT_SECRETS);
-  } catch (error) {
-    return res.status(401).json({
-      message: "unauthorized access",
-    });
-  }
+  const userId = req.user.id
 
   const file = await IMAGEKIT.files.upload({
     file: await toFile(Buffer.from(req.file.buffer), "file"),
@@ -32,7 +18,7 @@ const createpostController = async (req, res) => {
   const post = await postModel.create({
     caption: req.body.caption,
     post_image: file.url,
-    createdBy: decode.id,
+    createdBy: userId,
   });
 
   res.status(201).json({
@@ -41,28 +27,18 @@ const createpostController = async (req, res) => {
 };
 
 const getPostController = async (req, res) => {
-  const token = req.cookies.jwt_token;
-
-  if (!token) {
-    return res.status(401).json({
-      message: "unauthorized access",
-    });
-  }
-
-  let decode;
-  try {
-    decode = await jwt.verify(token, process.env.JWT_SECRETS);
-  } catch (error) {
-    return res.status(401).json({
-      message: "unauthorized access",
-    });
-  }
-
-  const userId = decode.id;
+ 
+  const userId = req.user.id;
 
   const post = await postModel.find({
     createdBy: userId,
   });
+
+   if (!post) {
+     return res.status(404).json({
+       message: "post not found",
+     });
+   }
 
   res.status(200).json({
     message: "fetched successfully",
@@ -70,33 +46,18 @@ const getPostController = async (req, res) => {
   });
 };
 
-const getPostDetailsController = async (req, res) => {
-  const token = req.cookies.jwt_token;
-  const postId = req.params.postId;
+const getPostDetailsController = async (req, res) =>{
+ 
+  const userId = req.user.id;
 
-  if (!token) {
-    return res.status(401).json({
-      message: "unauthorized access",
-    });
-  }
-
-  let decode;
-  try {
-    decode = await jwt.verify(token, process.env.JWT_SECRETS);
-  } catch (error) {
-    return res.status(401).json({
-      message: "unauthorized access",
-    });
-  }
-
-  const userId = decode.id;
+  const postId = req.params.id
 
   const post = await postModel.findById(postId);
 
-  if(!post){
+  if (!post) {
     return res.status(404).json({
-      message:"post not found"
-    })
+      message: "post not found",
+    });
   }
 
   const isValidUser = userId === post.createdBy.toString();
