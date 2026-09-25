@@ -4,6 +4,7 @@ const app = express()
 const Router = require("./routes/auth.routes")
 const postRouter = require("./routes/post.routes")
 const followRouter = require("./routes/follow.route")
+const likeRouter = require("./routes/like.route")
 const cookieParser = require("cookie-parser")
 
 app.use(express.json())
@@ -11,4 +12,5 @@ app.use(cookieParser())
 app.use("/api/auth",Router)
 app.use("/api/post",postRouter)
 app.use("/api/follow",followRouter)
+app.use("/api/like",likeRouter)
 module.exports = app
